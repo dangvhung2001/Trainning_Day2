@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,12 +15,12 @@ import java.util.List;
 public class EmployeeController {
     private List<Employee> employeeList = new ArrayList<>();
 
-    @GetMapping("/")
+    @GetMapping("/employee")
     public List<Employee> getAllEmployees() {
         return employeeList;
     }
 
-    @PostMapping("/add")
+    @PostMapping("/employee")
     public ResponseEntity<?> addEmployee(@RequestBody Employee employee) {
         if (isExit(employee.getId())) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Id already exists");
@@ -43,6 +44,23 @@ public class EmployeeController {
         return maxId;
     }
 
+    @PutMapping("/employee")
+    public ResponseEntity<?> updateEmployee(@RequestBody Employee employee) {
+
+        if (emailExit(employee.getEmail())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Email already exists");
+        }
+        for (Employee e : employeeList) {
+            if (e.getId() == employee.getId()) {
+                e.setEmail(employee.getEmail() != null ? employee.getEmail() : e.getEmail());
+                e.setName(employee.getName() != null ? employee.getName() : e.getName());
+                e.setDepartment(employee.getDepartment() != null ? employee.getDepartment() : e.getDepartment());
+                e.setRoles(employee.getRoles() != null ? employee.getRoles() : e.getRoles());
+                return new ResponseEntity<>(e, HttpStatus.OK);
+            }
+        }
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 
     @DeleteMapping("/employee/{id}")
     public ResponseEntity<String> deleteEmployee(@PathVariable int id) {
@@ -66,6 +84,7 @@ public class EmployeeController {
         }
         return false;
     }
+
     private boolean emailExit(String email) {
         for (Employee employee : employeeList) {
             if (employee.getEmail().equals(email)) {
@@ -73,5 +92,23 @@ public class EmployeeController {
             }
         }
         return false;
+    }
+
+    public Employee findId(int id) {
+        for (Employee e : employeeList) {
+            if (e.getId() == id) {
+                return e;
+            }
+        }
+        return null;
+    }
+
+    @GetMapping("/employee/{id}")
+    public ResponseEntity<?> findById(@PathVariable int id) {
+        Employee employee = findId(id);
+        if (employee == null) {
+            return new ResponseEntity<>("id not found, please try again!", HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(employee, HttpStatus.OK);
     }
 }
